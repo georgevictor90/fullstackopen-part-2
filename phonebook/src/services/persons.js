@@ -6,4 +6,21 @@ const getPersons = () => {
   return request.then((response) => response.data);
 };
 
-export default { getPersons };
+const create = (newPerson) => {
+  const request = axios.post(baseUrl, newPerson);
+  return request.then((response) => response.data);
+};
+
+const removeEntry = (id) => {
+  const url = `${baseUrl}/${id}`;
+  const request = axios.delete(url);
+  return request.then((response) => response.data);
+};
+
+const edit = (id, number) => {
+  const url = `${baseUrl}/${id}`;
+  const request = axios.patch(url, { number: number });
+  return request.then((response) => response.data);
+};
+
+export default { getPersons, create, removeEntry, edit };
