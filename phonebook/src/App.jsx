@@ -18,15 +18,18 @@ const App = () => {
     });
   }, []);
 
-  const addNameToPhonebook = (e) => {
+  const addPerson = (e) => {
     e.preventDefault();
 
     if (nameAlreadyExists())
       return alert(`${newName} is already added to phonebook`);
 
-    setPersons([...persons, { name: newName, number: phoneNum }]);
-    setNewName("");
-    setPhoneNum("");
+    const newPerson = { name: newName, number: phoneNum };
+    axios.post("http://localhost:3001/persons", newPerson).then((response) => {
+      setPersons([...persons, response.data]);
+      setNewName("");
+      setPhoneNum("");
+    });
   };
 
   const nameAlreadyExists = () => {
@@ -50,7 +53,7 @@ const App = () => {
       <Form
         name={newName}
         phone={phoneNum}
-        handleSubmit={addNameToPhonebook}
+        handleSubmit={addPerson}
         handleNameChange={(e) => handleChange(e, "name")}
         handlePhoneChange={(e) => handleChange(e, "phone")}
       />
