@@ -21,36 +21,45 @@ const App = () => {
 
   const addPerson = (e) => {
     e.preventDefault();
-
     const foundPerson = persons.find((person) => person.name === newName);
     const sameNumber = foundPerson?.number === phoneNum;
 
-    if (foundPerson && sameNumber)
-      return alert(`${newName} is already added to phonebook`);
+    switch (true) {
+      //Person is already in phonebook with the same number
+      case foundPerson && sameNumber:
+        return alert(`${newName} is already added to phonebook`);
+        break;
 
-    if (foundPerson && !sameNumber) {
-      const replaceNumber = window.confirm(
-        `${foundPerson.name} is already added to phonebook, replace the old number with a new one?`
-      );
-      if (!replaceNumber) return;
-      personsService.edit(foundPerson.id, phoneNum).then((response) => {
-        setPersons(
-          persons.map((person) =>
-            person.id === foundPerson.id ? response : person
-          )
+      //Person is already in phonebook with a different number
+      case foundPerson && !sameNumber:
+        const replaceNumber = window.confirm(
+          `${foundPerson.name} is already added to phonebook, replace the old number with a new one?`
         );
-        setNewName("");
-        setPhoneNum("");
-      });
-      return;
-    }
 
-    const newPerson = { name: newName, number: phoneNum };
-    personsService.create(newPerson).then((returnedPerson) => {
-      setPersons([...persons, returnedPerson]);
-      setNewName("");
-      setPhoneNum("");
-    });
+        if (!replaceNumber) return;
+
+        personsService.edit(foundPerson.id, phoneNum).then((response) => {
+          setPersons(
+            persons.map((person) =>
+              person.id === foundPerson.id ? response : person
+            )
+          );
+          setNewName("");
+          setPhoneNum("");
+        });
+        return;
+        break;
+
+      //Add a completely new person to phonebook
+      default:
+        const newPerson = { name: newName, number: phoneNum };
+        personsService.create(newPerson).then((returnedPerson) => {
+          setPersons([...persons, returnedPerson]);
+          setNewName("");
+          setPhoneNum("");
+        });
+        break;
+    }
   };
 
   const deletePerson = (id) => {
