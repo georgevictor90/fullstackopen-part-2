@@ -1,17 +1,19 @@
 import { useState } from "react";
+import { useEffect } from "react";
 import personsService from "./services/persons";
 import Form from "./components/Form";
 import Search from "./components/Search";
 import Persons from "./components/Persons";
 import Person from "./components/Person";
-import { useEffect } from "react";
 import Button from "./components/Button";
+import Notification from "./components/Notification";
 
 const App = () => {
   const [persons, setPersons] = useState([]);
   const [newName, setNewName] = useState("");
   const [phoneNum, setPhoneNum] = useState("");
   const [search, setSearch] = useState("");
+  const [message, setMessage] = useState(null);
 
   useEffect(() => {
     personsService.getPersons().then((persons) => {
@@ -27,8 +29,16 @@ const App = () => {
     switch (true) {
       //Person is already in phonebook with the same number
       case foundPerson && sameNumber:
-        return alert(`${newName} is already added to phonebook`);
-        break;
+        setMessage({
+          text: `${newName} is already added to phonebook`,
+          error: false,
+        });
+        setTimeout(() => {
+          setMessage(null);
+        }, 3000);
+        return;
+      // alert(`${newName} is already added to phonebook`);
+      // break;
 
       //Person is already in phonebook with a different number
       case foundPerson && !sameNumber:
@@ -38,26 +48,58 @@ const App = () => {
 
         if (!replaceNumber) return;
 
-        personsService.edit(foundPerson.id, phoneNum).then((response) => {
-          setPersons(
-            persons.map((person) =>
-              person.id === foundPerson.id ? response : person
-            )
-          );
-          setNewName("");
-          setPhoneNum("");
-        });
+        personsService
+          .edit(foundPerson.id, phoneNum)
+          .then((response) => {
+            setPersons(
+              persons.map((person) =>
+                person.id === foundPerson.id ? response : person
+              )
+            );
+            setNewName("");
+            setPhoneNum("");
+          })
+          .then(() => {
+            setMessage({
+              text: `Updated ${newName}'s phone number`,
+              error: false,
+            });
+            setTimeout(() => {
+              setMessage(null);
+            }, 3000);
+          })
+          .catch((error) => {
+            setMessage({
+              text: `Information of ${newName} has already been removed from server`,
+              error: true,
+            });
+            setTimeout(() => {
+              setMessage(null);
+            }, 3000);
+            setPersons(
+              persons.filter((person) => person.id !== foundPerson.id)
+            );
+            setNewName("");
+            setPhoneNum("");
+          });
         return;
-        break;
 
       //Add a completely new person to phonebook
       default:
         const newPerson = { name: newName, number: phoneNum };
-        personsService.create(newPerson).then((returnedPerson) => {
-          setPersons([...persons, returnedPerson]);
-          setNewName("");
-          setPhoneNum("");
-        });
+        personsService
+          .create(newPerson)
+          .then((returnedPerson) => {
+            setPersons([...persons, returnedPerson]);
+            setNewName("");
+            setPhoneNum("");
+          })
+          .then(() => {
+            setMessage({ text: `Added ${newName}`, error: false });
+            setTimeout(() => {
+              setMessage(null);
+            }, 3000);
+          });
         break;
     }
   };
@@ -67,9 +109,17 @@ const App = () => {
 
     if (!window.confirm(`Delete ${name}?`)) return;
 
-    personsService.removeEntry(id).then((response) => {
-      setPersons(persons.filter((person) => person.id !== id));
-    });
+    personsService
+      .removeEntry(id)
+      .then((response) => {
+        setPersons(persons.filter((person) => person.id !== id));
+      })
+      .then(() => {
+        setMessage({ text: `Deleted ${name}`, error: false });
+        setTimeout(() => {
+          setMessage(null);
+        }, 3000);
+      });
   };
 
   const filteredPersons = persons.filter((person) =>
@@ -85,6 +135,7 @@ const App = () => {
     <div>
       <h2>Phonebook</h2>
 
+      <Notification message={message} />
       <h3>Add new</h3>
       <Form
         name={newName}
